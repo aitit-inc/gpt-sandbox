@@ -66,7 +66,26 @@ class ChapterCreatorConfig(ClsConfiger):
     
 
 # 問題文生成の設定クラス
+class QuizCreatorConfig(ClsConfiger):
+    def __init__(self, substitution, config_file):
+        super().__init__(substitution, config_file)
 
+    def markdown_file_prefix(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def markdown_filename(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+# キーワード生成の設定クラス
+class KeywordCreatorConfig(ClsConfiger):
+    def __init__(self, substitution, config_file):
+        super().__init__(substitution, config_file)
+
+    def markdown_file_prefix(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def markdown_filename(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
 
 
 # 現在は使用していない

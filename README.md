@@ -44,6 +44,14 @@ pip install -r requirements.txt
 
 - 実行関数名：num_of_quiz
 
+## c. 章ごとにキーワード群を決める
+
+- 主クラス：KeywordCreator（libs/agent.py）
+
+- 実行関数名：get_keywords
+
+## d. 問題を生成する
+
 
 ## テスト実施ファイル（pytest_test.py）
 

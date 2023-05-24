@@ -10,7 +10,7 @@ USER_ROLE = "user"
 class ChapterMessages:
     def __init__(self, config, title):
         initial_prompt = config.construct_prompt()
-        self.initial_prompt = create_chat_message(SYSTEM_ROLE, SYSTEM_PROMPT)
+        self.initial_prompt = create_chat_message(SYSTEM_ROLE, initial_prompt)
         self.system_prompt = create_chat_message(SYSTEM_ROLE, SYSTEM_PROMPT)
         self.start_prompt = create_chat_message(SYSTEM_ROLE, START_PROMPT.format(title))
         self.chapter_prompt = create_chat_message(USER_ROLE, CHAPTER_PROMPT)
@@ -27,3 +27,20 @@ class ChapterMessages:
         ]
         return messages
     
+class GenKeywordMessages:
+    def __init__(self, num_of_keywords, chapter_messages, chapter):
+        triggering_prompt = TRIGGERING_PROMPT.format(chapter_messages)
+        self.initial_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
+        self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
+        keyword_prompt = KEYWORD_PROMPT.format(chapter, num_of_keywords)
+        self.input_prompt = create_chat_message(USER_ROLE, keyword_prompt)
+        self.system_prompt_2 = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
+
+    def create_messages(self):
+        messages = [
+            self.initial_prompt,
+            self.system_prompt,
+            self.input_prompt,
+            self.system_prompt_2
+        ]
+        return messages

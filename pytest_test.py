@@ -40,10 +40,23 @@ def main():
     config = "config.ini"
     chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
     chapters = chapter_creator.create_chapters()
-    quiz_creator = QuizCreator(OPENAI_API_KEY, chapter_creator.messages, chapters)
+    substitution = {}
+    quiz_creator = QuizCreator(OPENAI_API_KEY, substitution, config, chapter_creator.messages, chapters)
     num_quiz = quiz_creator.num_of_quiz()
     print(num_quiz)
 
+def keyword_test():
+    substitution = {
+        "AI_NAME": AI_NAME,
+        "AI_ROLE": AI_ROLE,
+        "AI_GOALS": AI_GOALS
+    }
+    config = "config.ini"
+    chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
+    chapters = chapter_creator.create_chapters()
+    chapter = chapter_creator.get_chapter(0)
+    print(chapter)
+    
 
 def start():
     global logger
