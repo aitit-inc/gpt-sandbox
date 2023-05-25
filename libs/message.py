@@ -28,19 +28,23 @@ class ChapterMessages:
         return messages
     
 class GenKeywordMessages:
-    def __init__(self, num_of_keywords, chapter_messages, chapter):
+    def __init__(self, num_of_keywords, chapter_messages, chapter=None):
         triggering_prompt = TRIGGERING_PROMPT.format(chapter_messages)
         self.initial_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
-        self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
-        keyword_prompt = KEYWORD_PROMPT.format(chapter, num_of_keywords)
-        self.input_prompt = create_chat_message(USER_ROLE, keyword_prompt)
-        self.system_prompt_2 = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
+        if chapter is not None:
+            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
+            keyword_prompt = KEYWORD_PROMPT.format(chapter, num_of_keywords)
+            self.input_prompt = create_chat_message(USER_ROLE, keyword_prompt)
+        else:
+            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT_2)
+            keyword_prompt = KEYWORD_PROMPT_2.format(num_of_keywords)
+            self.input_prompt= create_chat_message(USER_ROLE, keyword_prompt)
+            
 
     def create_messages(self):
         messages = [
             self.initial_prompt,
             self.system_prompt,
-            self.input_prompt,
-            self.system_prompt_2
+            self.input_prompt
         ]
         return messages

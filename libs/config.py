@@ -86,7 +86,12 @@ class KeywordCreatorConfig(ClsConfiger):
     
     def markdown_filename(self):
         return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
-
+    
+    def json_file_prefix(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def json_filename(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
 
 # 現在は使用していない
 class JsonReader(object):

@@ -54,9 +54,11 @@ def keyword_test():
     config = "config.ini"
     chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
     chapters = chapter_creator.create_chapters()
-    chapter = chapter_creator.get_chapter(0)
-    print(chapter)
-    
+    substitution = {}
+    keyword_creator = KeywordCreator(substitution, config, OPENAI_API_KEY, chapters)
+    keyword = keyword_creator.gen_keywords_json(10)
+    print(keyword)
+
 
 def start():
     global logger
@@ -67,7 +69,7 @@ def start():
         # 開始
         logger.info(libLog.LOG_START)
 
-        main()
+        keyword_test()
 
         # 終了
         logger.info(libLog.LOG_COMPLETE)

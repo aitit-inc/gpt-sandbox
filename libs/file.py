@@ -1,6 +1,7 @@
 import os
 import re
 import markdown2
+import json
 from bs4 import BeautifulSoup
 from .error_message import *
 
@@ -33,6 +34,19 @@ def write_markdown(input, file_prefix: str, file_name: str):
     prepare_dir(new_file)
     with open(new_file, OPEN_MODE_WRITE) as f:
         f.write(input_md)
+
+def write_json(json_string, json_file):
+    """
+    説明：json形式で出力されたファイルを書き出す
+    引数：json形式のstring、jsonファイルのパス
+    戻り値：
+    """
+    data = json.loads(json_string)
+    try:
+        with open(json_file, OPEN_MODE_WRITE) as file:
+            json.dump(data, file)
+    except:
+        print("入力が正しいJSONフォーマットでありません")
 
 def get_chapters(markedown_file):
     """

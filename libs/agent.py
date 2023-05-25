@@ -114,3 +114,16 @@ class KeywordCreator:
         write_markdown(keyword, self.config.markdown_file_prefix(), self.config.markdown_filename())
         
         return keyword
+    
+    def gen_keywords_json(self, num_of_keywords):
+        gen_msg = GenKeywordMessages(num_of_keywords, self.chapters)
+        messages = gen_msg.create_messages()
+        keyword = create_chat_completion(
+            messages,
+            temperature=TEMPERATURE,
+            api_key=self.api_key
+        )
+        json_file = os.path.join(self.config.json_file_prefix(), self.config.json_filename())
+        write_json(keyword, json_file)
+
+        return keyword
