@@ -92,3 +92,32 @@ def get_num_of_quiz(markdown_file):
         return result
     else:
         return ERROR_MSG05
+    
+def get_keywords_from_md(markdown_file):
+    """
+    説明：markdown形式で出力されたファイルからキーワードを取り出す
+    引数：markdownファイルのパス
+    戻り値：キーワード、辞書型
+    """
+    with open(markdown_file, OPEN_MODE_READ) as file:
+        markdown = file.read()
+    html = markdown2.markdown(markdown)
+
+    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, 'html.parser')
+    h1_all = soup.find_all('h1')
+    h2_all = soup.find_all('h2')
+    result = {}
+    if len(h1_all) == len(h2_all):
+        for i in range(len(h1_all)):
+            result[h1_all[i].text.strip()] = h2_all[i].string.split(', ')
+        return result
+    else:
+        return ERROR_MSG05
+    
+def write_json(string_data, filename):
+    data = {
+        "assistant_reply": string_data
+    }
+    with open(filename, OPEN_MODE_WRITE) as file:
+        json.dump(data, file)

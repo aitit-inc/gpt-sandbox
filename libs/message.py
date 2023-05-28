@@ -36,7 +36,7 @@ class GenKeywordMessages:
             keyword_prompt = KEYWORD_PROMPT.format(chapter, num_of_keywords)
             self.input_prompt = create_chat_message(USER_ROLE, keyword_prompt)
         else:
-            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT_2)
+            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
             keyword_prompt = KEYWORD_PROMPT_2.format(num_of_keywords)
             self.input_prompt= create_chat_message(USER_ROLE, keyword_prompt)
             
@@ -44,7 +44,27 @@ class GenKeywordMessages:
     def create_messages(self):
         messages = [
             self.initial_prompt,
+            self.input_prompt,
+            self.system_prompt
+        ]
+        return messages
+    
+class QuizMessages:
+    def __init__(self, memory, idx, keyword_list):
+        triggering_prompt = TRIGGERING_PROMPT.format(memory)
+        self.initial_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
+        self.system_prompt = create_chat_message(SYSTEM_ROLE, QUIZ_SYSTEM_PROMPT)
+        quiz_prompt = QUIZ_PROMPT.format(idx+1)
+        for keyword in keyword_list:
+            quiz_prompt += f"{keyword}\n"
+        self.quiz_prompt = create_chat_message(USER_ROLE, quiz_prompt)
+        self.system_prompt_2 = create_chat_message(SYSTEM_ROLE, QUIZ_FORMAT_PROMPT)
+
+    def create_messages(self):
+        messages = [
+            self.initial_prompt,
             self.system_prompt,
-            self.input_prompt
+            self.quiz_prompt,
+            self.system_prompt_2
         ]
         return messages

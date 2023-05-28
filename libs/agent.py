@@ -2,6 +2,7 @@ from .config import *
 from .message import *
 from .chat import *
 from .file import *
+import random
 
 
 # 定数定義
@@ -47,13 +48,13 @@ class ChapterCreator:
         return chapters[idx]
     
 
-class QuizCreator:
+class DecideNumQuiz:
     """
     説明：問題を生成する
     """
     def __init__(self, api_key, substitution, config, message_history, chapters_reply):
         self.api_key = api_key
-        self.config = QuizCreatorConfig(substitution, config)
+        self.config = DecideNumQuizConfig(substitution, config)
         self.messages = [] if message_history is None else message_history
         self.messages.append(
             create_chat_message(ASSISTANT_ROLE, chapters_reply)
@@ -84,13 +85,6 @@ class QuizCreator:
         self.num_quiz = get_num_of_quiz(result_path)
 
         return self.num_quiz
-    
-    def create_quiz(self, num_quiz, keywords=None):
-        if keywords != None:
-
-            return None
-        else:
-            return None
         
     
 class KeywordCreator:
@@ -102,7 +96,7 @@ class KeywordCreator:
         self.config = KeywordCreatorConfig(substitution, config)
         self.chapters = chapters
 
-    def get_keywords(self, num_of_keywords, chapter):
+    def get_keywords(self, num_of_keywords, chapter=None):
         gen_msg = GenKeywordMessages(num_of_keywords, self.chapters, chapter)
         messages = gen_msg.create_messages()
         keyword = create_chat_completion(
@@ -115,6 +109,7 @@ class KeywordCreator:
         
         return keyword
     
+    # json形式でキーワードの生成を行う（バグ解決中）
     def gen_keywords_json(self, num_of_keywords):
         gen_msg = GenKeywordMessages(num_of_keywords, self.chapters)
         messages = gen_msg.create_messages()
@@ -127,3 +122,35 @@ class KeywordCreator:
         write_json(keyword, json_file)
 
         return keyword
+    
+
+class QuizCreator:
+    def __init__(self, substitution, config, api_key, message_history=None):
+        self.api_key = api_key
+        self.config = QuizCreatorConfig(substitution, config)
+        self.memory = [] if message_history is None else message_history
+
+    # # ランダムな語句を抽出
+    # def random_words(keywordlist):
+    #     num_of_words = random.randint(1, len(keywordlist))
+    #     return random.sample(keywordlist, num_of_words)
+
+    def gen_quiz(self, idx, chapter, keywords):
+        keyword_list = keywords[chapter]
+        num_of_words = random.randint(1, len(keyword_list))
+        keyword_list = random.sample(keyword_list, num_of_words)
+        gen_msg = QuizMessages(self.memory, idx, keyword_list)
+        msg = gen_msg.create_messages()
+        # 未使用変数
+        # num_quiz = num_quizes[chapter]
+        assistant_reply = create_chat_completion(
+            msg,
+            temperature=TEMPERATURE,
+            api_key=self.api_key,    
+        )
+
+        # json出力
+        json_path = os.path.join(self.config.json_file_prefix(), self.config.json_filename())
+        write_json(assistant_reply, json_path)
+
+        return assistant_reply

@@ -66,7 +66,7 @@ class ChapterCreatorConfig(ClsConfiger):
     
 
 # 問題文生成の設定クラス
-class QuizCreatorConfig(ClsConfiger):
+class DecideNumQuizConfig(ClsConfiger):
     def __init__(self, substitution, config_file):
         super().__init__(substitution, config_file)
 
@@ -87,6 +87,17 @@ class KeywordCreatorConfig(ClsConfiger):
     def markdown_filename(self):
         return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
     
+    def json_file_prefix(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def json_filename(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+
+# 問題生成の設定クラス
+class QuizCreatorConfig(ClsConfiger):
+    def __init__(self, substitution, config_file):
+        super().__init__(substitution, config_file)
+
     def json_file_prefix(self):
         return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
     

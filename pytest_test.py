@@ -41,7 +41,7 @@ def main():
     chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
     chapters = chapter_creator.create_chapters()
     substitution = {}
-    quiz_creator = QuizCreator(OPENAI_API_KEY, substitution, config, chapter_creator.messages, chapters)
+    quiz_creator = DecideNumQuiz(OPENAI_API_KEY, substitution, config, chapter_creator.messages, chapters)
     num_quiz = quiz_creator.num_of_quiz()
     print(num_quiz)
 
@@ -56,8 +56,30 @@ def keyword_test():
     chapters = chapter_creator.create_chapters()
     substitution = {}
     keyword_creator = KeywordCreator(substitution, config, OPENAI_API_KEY, chapters)
-    keyword = keyword_creator.gen_keywords_json(10)
+    keyword = keyword_creator.get_keywords(10)
     print(keyword)
+
+def quiz():
+    config = 'config.ini'
+    substitution = {
+        "AI_NAME": AI_NAME,
+        "AI_ROLE": AI_ROLE,
+        "AI_GOALS": AI_GOALS
+    }
+    config = "config.ini"
+    chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
+    chapters_msg = chapter_creator.create_chapters()
+    chapter_creator.create_markdown_file(chapters_msg)
+    idx = 0
+    chapter = chapter_creator.get_chapter(idx)
+    substitution = {}
+    keyword_creator = KeywordCreator(substitution, config, OPENAI_API_KEY, chapters_msg)
+    keyword = keyword_creator.get_keywords(10)
+    path = 'outputs/markdown/keyword.md'
+    keywords = get_keywords_from_md(path)
+    quiz_creator = QuizCreator(substitution, config, OPENAI_API_KEY, chapters_msg)
+    quiz = quiz_creator.gen_quiz(idx, chapter, keywords)
+    print(quiz)
 
 
 def start():
@@ -69,7 +91,7 @@ def start():
         # 開始
         logger.info(libLog.LOG_START)
 
-        keyword_test()
+        quiz()
 
         # 終了
         logger.info(libLog.LOG_COMPLETE)

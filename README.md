@@ -75,4 +75,6 @@ python pytest_test.py
 
 ## 現状
 
-### キーワード生成の出力をjson書き出しを行う際にエラー（対応中）
+### キーワード抽出のための検索エンジンを実装中
+
+- サーチエンジン（libs/googlesearch.py）

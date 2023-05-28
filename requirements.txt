@@ -3,3 +3,7 @@ llama-index
 streamlit
 python-dotenv
 markdown2
+duckduckgo-search
+scrapy
+pycreds
+readability-lxml
