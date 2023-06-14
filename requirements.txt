@@ -7,3 +7,10 @@ duckduckgo-search
 scrapy
 pycreds
 readability-lxml
+# conda environment
+unstructured
+chromadb
+pdf2image
+langchain
+tiktoken
+openai

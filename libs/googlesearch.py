@@ -1,7 +1,9 @@
+from langchain.text_splitter import TokenTextSplitter
+from langchain.document_loaders import UnstructuredURLLoader
 from bs4 import BeautifulSoup
 from duckduckgo_search import ddg
 import openai
-import pycreds
+#import pycreds
 import logging
 import threading
 import queue
@@ -9,9 +11,84 @@ from readability import Document
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import os
+import json
 from dotenv import load_dotenv
 load_dotenv()
 
+
+from .chat import *
+from .prompt import *
+
+
+def create_summary_from_single_chunk(url, title, text, idx, q=None):
+    """
+    説明：OpenAIのLLMによって有益なテキストデータのみを取り出す
+    引数：url, title, ウェブサイトのテキスト
+    戻り値：抽出されたテキストデータ
+    """
+    logger = logging.getLogger('ddgsearch')
+    logger.info(f"extracting useful information from chunk {idx}, title: {title}")
+
+    messages = []
+    messages.append(create_message(text, url, title))
+    
+    openai.api_key = os.getenv('OPENAI_API_KEY')
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        max_tokens=1000,
+        temperature=0.2
+    )
+
+    if q:
+        q.put((idx, response.choices[0].message['content']))
+    logger.info(f"Done extracting useful information from chunk {idx}, title: {title}")
+
+    text = response.choices[0].message['content']
+
+    lines = text.splitlines()
+    if "useful information" in lines[0].lower():
+        text = "\n".join(lines[1:])
+
+    return (idx, text)
+
+
+def create_summary(url, title, text, max_chunks):
+    """
+    説明：長いテキストをチャンクに分割して処理
+    """
+    chunks = [text[i*1000: i*1000+1100] for i in range(len(text)//1000)]
+    chunks = chunks[:max_chunks]
+
+    threads = []
+
+    q = queue.Queue()
+
+    for idx, chunk in enumerate(chunks):
+        # 並列処理化
+        t = threading.Thread(target=create_summary_from_single_chunk, args=(url, title, chunk, idx, q))
+        threads.append(t)
+        t.start()
+
+    # すべての処理が終了
+    for t in threads:
+        t.join()
+
+    results = []
+    while not q.empty():
+        results.append(q.get())
+
+    logger = logging.getLogger('ddgsearch')
+    logger.info(f"Got {len(results)} results from the queue")
+
+    # ソート処理
+    results.sort(key=lambda x: x[0])
+    
+    # 分割されたテキストを結合
+    text = ''.join([x[1] for x in results])
+
+    return text
 
 def extract_useful_information_from_single_chunk(url, title, text, idx, q=None):
     """
@@ -22,21 +99,6 @@ def extract_useful_information_from_single_chunk(url, title, text, idx, q=None):
     logger = logging.getLogger('ddgsearch')
     logger.info(f"extracting useful information from chunk {idx}, title: {title}")
 
-    # 英語プロンプト（最初に使用）
-    # prompt = f"""
-    # Here is a url: {url}\n
-    # Here is its title: {title}\n
-    # Here is some text extracted from the webpage by bs4:\n
-    # ----------\n
-    # {text}\n
-    # ----------\n
-    # \n
-    # Web pages can have a lot of useless junk in them. For example, there might be a lot of ads, or a lot of navigation links,
-    # or a lot of text that is not relevant to the topic of the page. We want to extract only the useful information from the text.\n
-    # \n
-    # You can use the url and title to help you understand the context of the text.
-    # Please extract only the useful information from the text. Try not to rewrite the text, but instead extract only the useful information from the text.
-    # """
     prompt = f"""
     これはURL: {url}\n
     これはタイトル: {title}\n
@@ -174,7 +236,8 @@ class MySpider(scrapy.Spider):
         text = remove_duplicate_empty_lines(text)
 
         if self.clean_with_llm:
-            useful_text = extract_useful_information(url, title, text, 50)
+            useful_text = create_summary(url, title, text, 50)
+            # useful_text = extract_useful_information(url, title, text, 50)
         else:
             useful_text = readability(body_html)
         useful_text = remove_duplicate_empty_lines(useful_text)
@@ -209,3 +272,42 @@ def ddgsearch(query, num_results=10, clean_with_llm=False):
     process.start()
 
     return MySpider.results
+
+
+def create_message(chunk, url, title):
+    """
+    説明：ウェブページ要約
+    引数：ウェブページの一部、指示
+    戻り値：要約用のメッセージ
+    """
+    return {
+        "role": USER_ROLE,
+        "content": WEB_SUMMARY_PROMPT.format(chunk, url, title)
+    }
+
+
+def get_urls(query, num_results=5):
+    """
+    引数：検索ワード、取得サイト数
+    """
+    results = ddg(query, max_results=num_results)
+
+    # ログの出力
+    logger = logging.getLogger('ddgsearch')
+    logger.info(f"Got {len(results)} results from the search.")
+    logger.debug(f"Results: {results}")
+
+    # urlの抽出
+    urls = [result['href'] for result in results]
+    urls = urls[:num_results]
+
+    return urls
+
+
+def split_texts(urls, chunksize=1000):
+    loader = UnstructuredURLLoader(urls=urls)
+    data = loader.load()
+    text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=0)
+    texts = text_splitter.split_documents(data)
+
+    return texts

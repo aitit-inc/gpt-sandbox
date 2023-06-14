@@ -10,3 +10,5 @@ temp.py
 redis
 sample.ipynb
 outputs
+output.txt
+vectorstores

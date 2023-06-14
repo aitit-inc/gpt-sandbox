@@ -104,6 +104,19 @@ class QuizCreatorConfig(ClsConfiger):
     def json_filename(self):
         return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
 
+
+# Chromadbの設定クラス
+class ChromaConfig(ClsConfiger):
+    def __init__(self, substitution, config_file):
+        super().__init__(substitution, config_file)
+
+    def collection_name(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def persistant_directory(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+
 # 現在は使用していない
 class JsonReader(object):
     """

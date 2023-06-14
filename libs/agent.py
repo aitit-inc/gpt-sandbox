@@ -106,8 +106,9 @@ class KeywordCreator:
         )
 
         write_markdown(keyword, self.config.markdown_file_prefix(), self.config.markdown_filename())
-        
-        return keyword
+        result_path = self.config.markdown_file_prefix() + os.path.basename(self.config.markdown_filename())
+
+        return result_path
     
     # json形式でキーワードの生成を行う（バグ解決中）
     def gen_keywords_json(self, num_of_keywords):
