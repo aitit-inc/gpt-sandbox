@@ -1,8 +1,10 @@
 from libs.agent import *
 import os
+import json
 from dotenv import load_dotenv
 import libs.log as libLog
 import logging
+from libs.googlesearch import *
 
 # .envファイルからAPIキーを読み込む
 load_dotenv()
@@ -56,8 +58,29 @@ def keyword_test():
     chapters = chapter_creator.create_chapters()
     substitution = {}
     keyword_creator = KeywordCreator(substitution, config, OPENAI_API_KEY, chapters)
-    keyword = keyword_creator.get_keywords(10)
-    print(keyword)
+    # result_path = keyword_creator.get_keywords(10)
+    result_path = keyword_creator.add_keywords_from_web_search(TITLE, 0)
+    keywords = get_keywords_from_md(result_path)
+    print(keywords)
+
+
+def websearch_test():
+    substitution = {
+        "AI_NAME": AI_NAME,
+        "AI_ROLE": AI_ROLE,
+        "AI_GOALS": AI_GOALS
+    }
+    config = "config.ini"
+    chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
+    chapters = chapter_creator.create_chapters()
+    chapter = chapter_creator.get_chapter(0)
+    url_response = get_useful_urls(chapters, chapter)
+    data = json.loads(url_response)
+    print(data)
+    print(type(data))
+
+    return data['urls']
+
 
 def quiz():
     config = 'config.ini'
@@ -83,18 +106,15 @@ def quiz():
 
 
 def start():
-    global logger
+    log_level = "libs.agent.KeywordCreator"
 
     try:
         # ログインスタンス呼び出し
-        logger = libLog.init(logging.INFO)
-        # 開始
-        logger.info(libLog.LOG_START)
+        # logging.basicConfig()
+        # logging.getLogger(log_level)
 
-        quiz()
-
-        # 終了
-        logger.info(libLog.LOG_COMPLETE)
+        urls = websearch_test()
+        print(urls)
 
     except Exception:
         raise

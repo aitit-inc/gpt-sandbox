@@ -56,6 +56,17 @@ class ChapterCreatorConfig(ClsConfiger):
         for i, goal in enumerate(self.ai_goals):
             full_prompt += f"{i+1}. {goal}\n"
 
+        # 手順を指定する（検証）
+        full_prompt += (
+            """
+            下記は、あなたが目的を達成するために必要な手順です。\n
+            1. 問題集の各章の構成を決定する\n
+            2. 各章あたりに適切な問題数を決定する\n
+            3. 各章に対して、キーワード群を生成する\n
+            4. 各章に対して、問題を生成する\n
+            """
+        )
+
         return full_prompt
     
     def markdown_file_prefix(self):
@@ -91,6 +102,12 @@ class KeywordCreatorConfig(ClsConfiger):
         return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
     
     def json_filename(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def test_markdown_prefix(self):
+        return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
+    
+    def test_markdown_filename(self):
         return super().get(self.__class__.__name__, sys._getframe().f_code.co_name)
 
 # 問題生成の設定クラス

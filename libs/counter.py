@@ -16,5 +16,5 @@ def token_counter(messages: list) -> int:
         num_tokens += tokens_per_message
         for key, value in message.items():
             num_tokens += len(encoder.encode(value))
-
+    num_tokens += 3
     return num_tokens

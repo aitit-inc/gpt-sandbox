@@ -22,9 +22,11 @@ NUM_KEYWORDS = 10
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Embeddingモデル
-EMBEDDING_MODEL = "text-embedding-ada-002"
+EMBEDDING_MODEL = "text-embedding-ada-002" # MEMO max input = 8191
+#
+TOKEN_LIMIT = 4000
 
-
+# TODO search_wordsとqueryの自動生成処理
 def web_search(search_words, query, n_results=1):
     """
     説明：ウェブ検索を行い最も関連性の高い情報を抽出
@@ -89,11 +91,26 @@ def main():
     # 設定値
     substitution = {}
 
+    # WEB検索なしver
     quiz_creator = QuizCreator(substitution, CONFIG, OPENAI_API_KEY, chapters)
     idx = 0
     chapter = chapter_creator.get_chapter(idx)
 
     quiz = quiz_creator.gen_quiz(idx, chapter, keywords)
+
+    # WEB検索ありver
+    # 検索用のテキスト
+    # search_words = "python 機械学習"
+    # 取得するテキストチャンクの数
+    num_results = 1
+    quiz_creator = QuizCreator(substitution, CONFIG, OPENAI_API_KEY, model="gpt-4", message_history=chapters)
+    idx = 0
+    chapter = chapter_creator.get_chapter(idx)
+    # WEB検索処理
+    search_result = web_search(search_words, chapter, num_results)
+
+    quiz = quiz_creator.gen_quiz_with_search(idx, chapter, keywords, search_result)
+
 
     # 出力の書き込み
     with open("output.txt", OPEN_MODE_WRITE, encoding="utf-8") as file:

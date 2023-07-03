@@ -13,11 +13,55 @@ from scrapy.crawler import CrawlerProcess
 import os
 import json
 from dotenv import load_dotenv
-load_dotenv()
+from .chat import *
+from .counter import token_counter
 
 
 from .chat import *
 from .prompt import *
+from .vectorstore import VectorStore
+
+
+# 定数定義
+CONFIG = "config.ini"
+# .envファイルからAPIキーを読み込む
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Embeddingモデル
+EMBEDDING_MODEL = "text-embedding-ada-002"
+
+
+def get_urls_messages(chapters_reply, chapter, json_format):
+    triggering_prompt = TRIGGERING_PROMPT.format(chapters_reply)
+    triggering_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
+    instruction = f"""
+    {chapter}\n
+    上記の章の問題を作成する際に役立つウェブサイトのURLを出力しなさい。
+    """
+    input_prompt = create_chat_message(USER_ROLE, instruction)
+    format = f"""
+    出力形式については以下のJSON形式のみ認められております。\n
+    {json_format}\n
+    必ずpythonのjson.loadsで読み込めるような形式に合致させてください。
+    """
+    system_prompt = create_chat_message(SYSTEM_ROLE, format)
+    return [triggering_prompt, input_prompt, system_prompt]
+
+def get_useful_urls(chapters_reply, chapter):
+    """
+    説明：各章に関連する有用なウェブサイトのURLを取得
+    """
+    json_format = {
+        "chapter": f"{chapter}", # MEMO プロパティは「"」で囲まれている必要がある
+        "urls": ["url1", "url2", "url3"]
+    }
+    messages = get_urls_messages(chapters_reply, chapter, json_format)
+    response = create_chat_completion(
+        messages,
+        temperature=0.2,
+        api_key=OPENAI_API_KEY
+    )
+    return response
 
 
 def create_summary_from_single_chunk(url, title, text, idx, q=None):
@@ -26,18 +70,22 @@ def create_summary_from_single_chunk(url, title, text, idx, q=None):
     引数：url, title, ウェブサイトのテキスト
     戻り値：抽出されたテキストデータ
     """
+    token_limit = 8000
     logger = logging.getLogger('ddgsearch')
     logger.info(f"extracting useful information from chunk {idx}, title: {title}")
 
     messages = []
     messages.append(create_message(text, url, title))
+    current_token_used = token_counter(messages)
+    num_tokens = token_limit - current_token_used
+
     
     openai.api_key = os.getenv('OPENAI_API_KEY')
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=messages,
-        max_tokens=1000,
+        max_tokens=num_tokens,
         temperature=0.2
     )
 
@@ -58,7 +106,7 @@ def create_summary(url, title, text, max_chunks):
     """
     説明：長いテキストをチャンクに分割して処理
     """
-    chunks = [text[i*1000: i*1000+1100] for i in range(len(text)//1000)]
+    chunks = [text[i*4000: i*4000+4100] for i in range(len(text)//4000)]
     chunks = chunks[:max_chunks]
 
     threads = []
@@ -280,10 +328,9 @@ def create_message(chunk, url, title):
     引数：ウェブページの一部、指示
     戻り値：要約用のメッセージ
     """
-    return {
-        "role": USER_ROLE,
-        "content": WEB_SUMMARY_PROMPT.format(chunk, url, title)
-    }
+    prompt = WEB_SUMMARY_PROMPT.format(chunk, url, title)
+
+    return create_chat_message(USER_ROLE, prompt)
 
 
 def get_urls(query, num_results=5):
@@ -311,3 +358,27 @@ def split_texts(urls, chunksize=1000):
     texts = text_splitter.split_documents(data)
 
     return texts
+
+def web_search(search_words, query, n_results=1):
+    """
+    説明：ウェブ検索を行い最も関連性の高い情報を抽出
+    """
+    texts = split_texts(get_urls(search_words))
+    substitution = {}
+    vector_store = VectorStore(OPENAI_API_KEY, substitution, CONFIG)
+    # ベクトルDB作成
+    vector_store.create_db(texts)
+
+    # クエリをEmbedding化
+    query_embed = openai.Embedding.create(
+        input=query,
+        model=EMBEDDING_MODEL
+    )["data"][0]["embedding"]
+
+    query_results = vector_store.collection.query(
+        query_embeddings=query_embed,
+        n_results=n_results,
+        include=["documents"]
+    )
+
+    return query_results["documents"][0]

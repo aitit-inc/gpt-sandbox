@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ## b. 問題数を決定する
 
-- 主クラス：QuizCreator（libs/agent.py）
+- 主クラス：DecideNumQuiz（libs/agent.py）
 
 - 実行関数名：num_of_quiz
 
@@ -51,6 +51,10 @@ pip install -r requirements.txt
 - 実行関数名：get_keywords
 
 ## d. 問題を生成する
+
+- 主クラス：QuizCreator（libs/agent.py）
+
+- 実行関数名：gen_quiz（WEB検索なし）gen_quiz_with_search（WEB検索あり）
 
 ### a. キーワードをランダムに選択
 

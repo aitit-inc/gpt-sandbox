@@ -1,5 +1,6 @@
 from .prompt import *
 from .chat import *
+from .counter import token_counter
 
 
 # 定数定義
@@ -50,15 +51,19 @@ class GenKeywordMessages:
         return messages
     
 class QuizMessages:
-    def __init__(self, memory, idx, keyword_list):
+    def __init__(self, memory, idx, keyword_list, web_search_text=None):
         triggering_prompt = TRIGGERING_PROMPT.format(memory)
         self.initial_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
-        self.system_prompt = create_chat_message(SYSTEM_ROLE, QUIZ_SYSTEM_PROMPT)
+        # self.system_prompt = create_chat_message(SYSTEM_ROLE, QUIZ_SYSTEM_PROMPT)
+        self.system_prompt = create_chat_message(SYSTEM_ROLE, QUIZ_SYSTEM_PROMPT_WEB)
         quiz_prompt = QUIZ_PROMPT.format(idx+1)
         for keyword in keyword_list:
             quiz_prompt += f"{keyword}\n"
         self.quiz_prompt = create_chat_message(USER_ROLE, quiz_prompt)
         self.system_prompt_2 = create_chat_message(SYSTEM_ROLE, QUIZ_FORMAT_PROMPT)
+        # TODO 検索結果を１件しか参照していないので、改善の余地あり
+        search_result  = WEB_SEARCH_PROMPT.format(web_search_text) if web_search_text is not None else None
+        self.search_prompt = create_chat_message(SYSTEM_ROLE, search_result)
 
     def create_messages(self):
         messages = [
@@ -68,3 +73,16 @@ class QuizMessages:
             self.system_prompt_2
         ]
         return messages
+    
+    def create_messages_include_search(self):
+        messages = [
+            self.initial_prompt,
+            self.search_prompt,
+            self.system_prompt,
+            self.quiz_prompt,
+            self.system_prompt_2
+        ]
+        current_token_used = token_counter(messages)
+        # 出力確認
+        print(f"現在使用中のトークン数：{current_token_used}")
+        return messages, current_token_used
