@@ -1,5 +1,7 @@
 .vscode
+test
 .env
+_bk
 __pycache__
 python=3.9.7
 venv
@@ -13,3 +15,4 @@ outputs
 output.txt
 vectorstores
 evidence
+output.log

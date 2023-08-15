@@ -58,7 +58,7 @@ def get_useful_urls(chapters_reply, chapter):
     messages = get_urls_messages(chapters_reply, chapter, json_format)
     response = create_chat_completion(
         messages,
-        temperature=0.2,
+        temperature=0.1,
         api_key=OPENAI_API_KEY
     )
     return response
@@ -90,6 +90,7 @@ def create_summary_from_single_chunk(url, title, text, idx, q=None):
     )
 
     if q:
+        # キューに結果を入れる（GPTからの出力をキューに入れる）
         q.put((idx, response.choices[0].message['content']))
     logger.info(f"Done extracting useful information from chunk {idx}, title: {title}")
 
@@ -106,7 +107,7 @@ def create_summary(url, title, text, max_chunks):
     """
     説明：長いテキストをチャンクに分割して処理
     """
-    chunks = [text[i*4000: i*4000+4100] for i in range(len(text)//4000)]
+    chunks = [text[i*3000: i*3000+3100] for i in range(len(text)//3000)]
     chunks = chunks[:max_chunks]
 
     threads = []
@@ -321,6 +322,28 @@ def ddgsearch(query, num_results=10, clean_with_llm=False):
 
     return MySpider.results
 
+
+def gpt_search(chapters_reply, chapter, clean_with_llm=False):
+    """
+    説明：ウェブサーチを行い、要約を作成
+    引数：検索用のクエリ（必須）
+    戻り値：検索結果
+    """
+    logger = logging.getLogger('ddgsearch')
+    # 検索結果の取得
+    results = get_useful_urls(chapters_reply, chapter)
+    data = json.loads(results)
+    urls = data['urls']
+    # 取得したURLの数を確認
+    logger.info(f"Got {len(urls)} results from the search.")
+    # URL確認
+    logger.info("URLs: {}".format(urls))
+
+    process = CrawlerProcess()
+    process.crawl(MySpider, urls, clean_with_llm)
+    process.start()
+
+    return MySpider.results
 
 def create_message(chunk, url, title):
     """

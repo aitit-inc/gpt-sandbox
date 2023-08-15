@@ -1,5 +1,6 @@
 from .prompt import *
 from .chat import *
+from .file import *
 from .counter import token_counter
 
 
@@ -10,11 +11,24 @@ USER_ROLE = "user"
 
 class ChapterMessages:
     def __init__(self, config, title):
+        # json出力用のフォーマット
+        json_format = {
+            "第n章": {
+                "第n節": "contents",
+                "第n節": "contents"
+            },
+            "第n章": {
+                "第n節": "contents",
+                "第n節": "contents"
+            }
+        }
         initial_prompt = config.construct_prompt()
         self.initial_prompt = create_chat_message(SYSTEM_ROLE, initial_prompt)
         self.system_prompt = create_chat_message(SYSTEM_ROLE, SYSTEM_PROMPT)
         self.start_prompt = create_chat_message(SYSTEM_ROLE, START_PROMPT.format(title))
         self.chapter_prompt = create_chat_message(USER_ROLE, CHAPTER_PROMPT)
+        self.chapter_prompt_ver2 = create_chat_message(USER_ROLE, CHAPTER_PROMPT_VER2)
+        self.json_prompt = create_chat_message(SYSTEM_ROLE, JSON_FORMAT.format(json_format))
         self.markdown_prompt = create_chat_message(USER_ROLE, MARKDOWN_PROMPT)
 
     def create_messages(self):
@@ -28,13 +42,33 @@ class ChapterMessages:
         ]
         return messages
     
+    def create_messages_ver2(self):
+        # 最初のメッセージリストを生成
+        messages = [
+            self.initial_prompt,
+            self.system_prompt,
+            self.start_prompt,
+            self.chapter_prompt_ver2,
+            self.markdown_prompt
+        ]
+        return messages
+    
 class GenKeywordMessages:
-    def __init__(self, num_of_keywords, chapter_messages, chapter=None):
+    def __init__(self, num_of_keywords, chapter_messages=None, chapter=None, chapter_result_path=None):
         triggering_prompt = TRIGGERING_PROMPT.format(chapter_messages)
         self.initial_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
         if chapter is not None:
-            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
-            keyword_prompt = KEYWORD_PROMPT.format(chapter, num_of_keywords)
+            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT_2)
+            # self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)
+            keyword_prompt = KEYWORD_PROMPT_3.format(chapter)
+            # keyword_prompt = KEYWORD_PROMPT.format(chapter, num_of_keywords)
+            self.input_prompt = create_chat_message(USER_ROLE, keyword_prompt)
+        elif chapter_result_path is not None:
+            chapters = read_markdown(chapter_result_path)
+            triggering_prompt = KEYWORD_TRIGGERING_PROMPT.format(chapters)
+            self.initial_prompt = create_chat_message(SYSTEM_ROLE, triggering_prompt)
+            self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT_2)
+            keyword_prompt = KEYWORD_PROMPT_3.format(chapter)
             self.input_prompt = create_chat_message(USER_ROLE, keyword_prompt)
         else:
             self.system_prompt = create_chat_message(SYSTEM_ROLE, KEYWORD_SYSTEM_PROMPT)

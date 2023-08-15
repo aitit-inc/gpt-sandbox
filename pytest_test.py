@@ -11,9 +11,9 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # 定数定義
-AI_NAME = "策定者"
+AI_NAME = "問題集を作成する教師"
 AI_ROLE = "学習に適した問題集をユーザの要望に合わせて作成する"
-AI_GOALS = "問題集の作成,問題集をセクションに分割する,セクションごとに各章を作成する,各章の問題数を決定する"
+AI_GOALS = "問題集の作成,問題集を目次を作成する,問題集の各章と各節を作成する,各章の問題数を決定する,各章のキーワードを決定する,問題を作成する"
 TITLE = "Pythonではじめる機械学習入門"
 
 
@@ -56,10 +56,12 @@ def keyword_test():
     config = "config.ini"
     chapter_creator = ChapterCreator(OPENAI_API_KEY, substitution, config, TITLE)
     chapters = chapter_creator.create_chapters()
+    chapter = chapter_creator.get_chapter(0)
+    num_of_keywords = 10
     substitution = {}
     keyword_creator = KeywordCreator(substitution, config, OPENAI_API_KEY, chapters)
-    # result_path = keyword_creator.get_keywords(10)
-    result_path = keyword_creator.add_keywords_from_web_search(TITLE, 0)
+    result_path = keyword_creator.get_keywords(num_of_keywords, chapter=chapter)
+    # result_path = keyword_creator.add_keywords_from_web_search(TITLE, 0)
     keywords = get_keywords_from_md(result_path)
     print(keywords)
 
@@ -106,16 +108,16 @@ def quiz():
 
 
 def start():
-    log_level = "libs.agent.KeywordCreator"
+    # log_level = "libs.agent.KeywordCreator"
 
     try:
         # ログインスタンス呼び出し
         # logging.basicConfig()
         # logging.getLogger(log_level)
 
-        urls = websearch_test()
-        print(urls)
-
+        # テスト実行
+        keyword_test()
+        
     except Exception:
         raise
 

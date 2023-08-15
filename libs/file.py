@@ -35,6 +35,18 @@ def write_markdown(input, file_prefix: str, file_name: str):
     with open(new_file, OPEN_MODE_WRITE) as f:
         f.write(input_md)
 
+def read_markdown(file_name: str) -> str:
+    """
+    説明：markdown形式で出力されたファイルを読み込む
+    入力：markdownファイルのパス
+    出力：markdown形式のstring
+    """
+    with open(file_name, OPEN_MODE_READ) as file:
+        markdown = file.read()
+    html = markdown2.markdown(markdown)
+    html_text = str(html)
+    return html_text
+
 def write_json(json_string, json_file):
     """
     説明：json形式で出力されたファイルを書き出す

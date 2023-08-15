@@ -43,6 +43,8 @@ class VectorStore:
         db.persist()
 
         # サーチできるように書き込みデータからロード
+        # TODO 前回実行時のデータが残っているので、削除するようにする
+        # 現状：環境設定ファイルのpersist_directoryを変更することで対応
         client = chromadb.Client(Settings(
             chroma_db_impl="duckdb+parquet",
             persist_directory=self.config.persistant_directory()

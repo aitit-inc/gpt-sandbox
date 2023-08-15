@@ -32,13 +32,15 @@ class ChapterCreator:
         self.api_key = api_key
         self.config = ChapterCreatorConfig(substitution, config_file)
         ms_cl = ChapterMessages(self.config, title)
-        self.messages = ms_cl.create_messages()
+        # self.messages = ms_cl.create_messages()
+        self.messages = ms_cl.create_messages_ver2()
 
     def create_chapters(self):
         assistant_reply = create_chat_completion(
             self.messages,
             temperature=TEMPERATURE,
-            api_key=self.api_key
+            api_key=self.api_key,
+            model="gpt-4"
         )
         return assistant_reply
 
@@ -49,6 +51,7 @@ class ChapterCreator:
                       self.config.markdown_filename())
         
     def get_chapter(self, idx):
+        # markdown出力した場合のみ有効
         file_path = self.config.markdown_file_prefix() + self.config.markdown_filename()
         _, chapters = get_chapters(file_path)
         return chapters[idx]
@@ -107,7 +110,8 @@ class KeywordCreator:
         gen_msg = GenKeywordMessages(num_of_keywords, self.chapters, chapter)
         messages = gen_msg.create_messages()
         keyword = create_chat_completion(
-            messages,
+            model="gpt-4",
+            messages=messages,
             temperature=TEMPERATURE,
             api_key=self.api_key
         )
@@ -116,6 +120,7 @@ class KeywordCreator:
         result_path = self.config.markdown_file_prefix() + os.path.basename(self.config.markdown_filename())
 
         return result_path
+    
     
     # json形式でキーワードの生成を行う（バグ解決中）
     # ステータス：未決
@@ -176,8 +181,6 @@ class KeywordCreator:
         
         return result_path
 
-
-    
 
 class QuizCreator:
     # TODO 問題数でループして各章の問題を生成

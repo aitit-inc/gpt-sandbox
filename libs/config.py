@@ -8,6 +8,7 @@ import json
 # 定数定義
 OPEN_MODE_READ = 'r'
 
+# TODO AutoGPTを参考にした環境設定クラスの構築
 
 class ClsConfiger(object):
     """
